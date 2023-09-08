@@ -521,7 +521,7 @@ public partial class Inventory
 }
 ```
 
-Finally we need to use the Inventory, we can do this inside of a VisualElement like so:
+Finally we need to use the Inventory, we can do this inside of a **VisualElement** like so:
 
 ```c#
 [UxmlElement]
