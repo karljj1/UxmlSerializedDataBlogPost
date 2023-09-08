@@ -709,6 +709,24 @@ public class AmmoPropertyDrawer : PropertyDrawer
 }
 ```
 
+Example UXML:
+
+```xml
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Character name="Sniper">
+        <inventory>
+            <Inventory next-item-id="4">
+                <items>
+                    <Gun id="1" name="Rifle" weight="4.5" damage="33" ammo="7/7" />
+                    <Sword id="2" name="Knife" weight="0.5" slash-damage="7" />
+                    <HealthPack id="3" />
+                </items>
+            </Inventory>
+        </inventory>
+    </Character>
+</ui:UXML>
+```
+
 ## Overriding attributes
 
 An additional noteworthy feature is what we refer to as "overriding attributes." This capability not only allows you to substitute the get and set behavior for a UXML attribute but also replaces the attribute itself with your overridden version in the UI Builder attributes view. This can be particularly handy for customizing attributes inherited from child classes. For instance, you might want to enforce value limits in an **IntegerField**, which can be achieved by overriding the value attribute and applying the [Range](https://docs.unity3d.com/ScriptReference/RangeAttribute.html) attribute like so:
