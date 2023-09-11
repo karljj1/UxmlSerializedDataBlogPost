@@ -86,7 +86,7 @@ In both the above examples the UXML is the same:
 </ui:UXML>
 ```
 
-Currently, if an element lacks the UxmlElement attribute, Unity falls back to the UxmlTraits and UxmlFactory systems. However, it's important to note that we plan to phase out these older systems in the future. Therefore, we highly recommend transitioning to the new system for any upcoming work.
+As of now, when an element lacks the **UxmlElement** attribute, Unity resorts solely to the **UxmlTraits** and **UxmlFactory** systems for serialization across the entire class hierarchy. It's important to underline that we uphold a unified approach, employing a single system for serialization per visual element. While it's acceptable for both systems to be used when serializing a UXML file containing multiple elements, we do not mix them when processing a single element. However, it's crucial to be aware that we have plans to eventually phase out these older systems. Hence, we strongly advise transitioning to the new system for any future development efforts.
 
 ## Attribute Converters
 
@@ -232,7 +232,7 @@ The UXML would now look like the following:
 </ui:UXML>
 ```
 
-One final noteworthy point to mention is that **UxmlObjectReferenceFields** can be used in conjunction with **interfaces**. However, it's important to note that you can only assign **UxmlObjects** that implement the specified interface.. An example of using interfaces can be found in our [scripting docs](https://docs.unity3d.com/2023.3/Documentation/ScriptReference/UIElements.UxmlObjectReferenceAttribute.html).
+One final noteworthy point to mention is that **UxmlObjectReferenceFields** can be used in conjunction with **interfaces**. However, it's important to note that you can only assign **UxmlObjects** that implement the specified interface. An example of using interfaces can be found in our [scripting docs](https://docs.unity3d.com/2023.3/Documentation/ScriptReference/UIElements.UxmlObjectReferenceAttribute.html).
 
 ## How does it work?
 
@@ -276,10 +276,11 @@ The **UxmlSerializedData** class takes on the roles of both the **UxmlTraits** a
 
 Now that we are using serialized fields this opens up a host of possibilities. We can support custom [property drawers](https://docs.unity3d.com/ScriptReference/PropertyDrawer.html), [decorators](https://docs.unity3d.com/ScriptReference/DecoratorDrawer.html), and other attributes such as [Header](https://docs.unity3d.com/ScriptReference/HeaderAttribute.html), [HideInInspector](https://docs.unity3d.com/ScriptReference/HideInInspector.html), [Range](https://docs.unity3d.com/ScriptReference/RangeAttribute.html) etc. You can see some examples of this in our [scripting docs](https://docs.unity3d.com/2023.3/Documentation/ScriptReference/UIElements.UxmlAttributeAttribute.html).
 
-To make this process smoother, we've implemented a mechanism to transfer any attributes from the source field to the serialized field. We've also relaxed some of the restrictions on our attributes to accommodate this functionality. For instance, you can now apply attributes like **Range** directly to a property field. This adjustment enables us to later transfer these attributes over to a serialized field in the generated **UxmlSerializedData** class.
+To make this process smoother, we've implemented a mechanism to transfer any attributes from the source field to the serialized field. We've also relaxed some of the restrictions on our attributes to accommodate this functionality. 
+For instance, you can now apply attributes like **Range** directly to a property in addition to fields. This adjustment enables us to later transfer these attributes over to a serialized field in the generated **UxmlSerializedData** class.
 
 The **UI Builder** now edits the elements **UxmlSerializedData** through [PropertyFields](https://docs.unity3d.com/ScriptReference/UIElements.PropertyField.html), resembling the Inspector approach.
-When using your own types using the AttributeConverter approach, its recommend to mark them as **Serializable** so that they can be edited in the **UI Builder** attributes view and wont lose their data during serialization.
+When utilizing your custom types through the **AttributeConverter** approach, it is imperative to designate them as **Serializable**. This requirement ensures that they remain editable within the **UI Builder** attributes view and that their data remains intact during the serialization process."
 
 The following is the generated code for our `Department` **AttributeConverter** example:
 
