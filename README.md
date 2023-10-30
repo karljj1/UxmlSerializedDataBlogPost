@@ -42,7 +42,7 @@ public class ProgressBar : VisualElement
 }
 ```
 
-In the example above, you can see that we have to create a **UxmlTraits** class. This class defines the attributes we want to include in the UXML element. For each attribute, we have to specify:
+In the example above, you can see that we have to create a **UxmlTraits** class. This class defines the attributes we want to include in the UXML element. For each attribute, we specify:
 
 - Its type
 - Default value
@@ -76,7 +76,6 @@ Here is what's changed:
 - We've introduced the requirement to mark the class as **partial** (details on this coming up).
 - Each attribute now only requires the [UxmlAttribute](https://docs.unity3d.com/2023.3/Documentation/ScriptReference/UIElements.UxmlAttributeAttribute.html) attribute – no more **UxmlTraits**.
 - The attribute name is automatically derived from the property name, although you can also specify a custom name within the attribute arguments.
-- Default values are now directly assigned to the field.
 
 In both the above examples the UXML is the same:
 
@@ -252,10 +251,14 @@ public partial class ProgressBar
     public new class UxmlSerializedData : UnityEngine.UIElements.VisualElement.UxmlSerializedData
     {
         #pragma warning disable 649
-        [global::UnityEngine.SerializeField] private string title;
-        [global::UnityEngine.SerializeField] private float lowValue;
-        [global::UnityEngine.SerializeField] private float highValue;
-        [global::UnityEngine.SerializeField] private float value;
+        [SerializeField] private string title;
+        [SerializeField, UxmlIgnore, HideInInspector] UxmlAttributeFlags title_UxmlAttributeFlags;
+        [SerializeField] private float lowValue;
+        [SerializeField, UxmlIgnore, HideInInspector] UxmlAttributeFlags lowValue_UxmlAttributeFlags;
+        [SerializeField] private float highValue;
+        [SerializeField, UxmlIgnore, HideInInspector] UxmlAttributeFlags highValue_UxmlAttributeFlags;
+        [SerializeField] private float value;
+        [SerializeField, UxmlIgnore, HideInInspector] UxmlAttributeFlags value_UxmlAttributeFlags;
         #pragma warning restore 649
         
         public override object CreateInstance() => new ProgressBar();
@@ -263,20 +266,24 @@ public partial class ProgressBar
         {
             base.Deserialize(obj);
             var e = (ProgressBar)obj;
-            e.title = this.title;
-            e.lowValue = this.lowValue;
-            e.highValue = this.highValue;
-            e.value = this.value;
+            if (ShouldWriteAttributeValue(title_UxmlAttributeFlags))
+                e.title = title;
+            if (ShouldWriteAttributeValue(lowValue_UxmlAttributeFlags))
+                e.lowValue = lowValue;
+            if (ShouldWriteAttributeValue(highValue_UxmlAttributeFlags))
+                e.highValue = highValue;
+            if (ShouldWriteAttributeValue(value_UxmlAttributeFlags))
+                e.value = value;
         }
     }
 }
 ```
 
-The **UxmlSerializedData** class takes on the roles of both the **UxmlTraits** and **UxmlFactory**. Every attribute is transformed into a [serialized field](https://docs.unity3d.com/ScriptReference/SerializeField.html). The **Deserialize** method then handles the transfer of data from these serialized fields to the source object. This operation is typically executed when importing UXML or making edits in the UI Builder.
+The **UxmlSerializedData** class takes on the roles of both the **UxmlTraits** and **UxmlFactory**. Every attribute is transformed into a [serialized field](https://docs.unity3d.com/ScriptReference/SerializeField.html) with a accompanying **** field. The **Deserialize** method then handles the transfer of overridden attributes from these serialized fields to the source object. This operation is typically executed when importing UXML or making edits in the UI Builder. The **UxmlAttributeFlags** field is used to track which fields have been overridden in UXML and should be applied to the object, the other fields remain with their default values. We handle the **UxmlAttributeFlags** fields internally, you should never need to modify them yourself.
 
 Now that we are using serialized fields this opens up a host of possibilities. We can support custom [property drawers](https://docs.unity3d.com/ScriptReference/PropertyDrawer.html), [decorators](https://docs.unity3d.com/ScriptReference/DecoratorDrawer.html), and other attributes such as [Header](https://docs.unity3d.com/ScriptReference/HeaderAttribute.html), [HideInInspector](https://docs.unity3d.com/ScriptReference/HideInInspector.html), [Range](https://docs.unity3d.com/ScriptReference/RangeAttribute.html) etc. You can see some examples of this in our [scripting docs](https://docs.unity3d.com/2023.3/Documentation/ScriptReference/UIElements.UxmlAttributeAttribute.html).
 
-To make this process smoother, we've implemented a mechanism to transfer any attributes from the source field to the serialized field. We've also relaxed some of the restrictions on our attributes to accommodate this functionality. 
+To make this process smoother, we've implemented a mechanism to transfer any attributes from the source field to the serialized field. We've also relaxed some of the restrictions on our attributes to accommodate this functionality.
 For instance, you can now apply attributes like **Range** directly to a property in addition to fields. This adjustment enables us to later transfer these attributes over to a serialized field in the generated **UxmlSerializedData** class.
 
 The **UI Builder** now edits the elements **UxmlSerializedData** through [PropertyFields](https://docs.unity3d.com/ScriptReference/UIElements.PropertyField.html), resembling the Inspector approach.
@@ -292,22 +299,30 @@ public partial class Department
     public new class UxmlSerializedData : UnityEngine.UIElements.VisualElement.UxmlSerializedData
     {
         #pragma warning disable 649
-        [global::UnityEngine.SerializeField] private Person manager;
-        [global::UnityEngine.SerializeField] private System.Collections.Generic.List<Person> employees;
+        [SerializeField] private Person manager;
+        [SerializeField, UxmlIgnore, HideInInspector] UxmlAttributeFlags manager_UxmlAttributeFlags;
+        [SerializeField] private System.Collections.Generic.List<Person> employees;
+        [SerializeField, UxmlIgnore, HideInInspector] UxmlAttributeFlags employees_UxmlAttributeFlags;
         #pragma warning restore 649
-        
+
         public override object CreateInstance() => new Department();
         public override void Deserialize(object obj)
         {
             base.Deserialize(obj);
             var e = (Department)obj;
-            if (this.manager != null)
+            if (ShouldWriteAttributeValue(manager_UxmlAttributeFlags))
             {
-                e.manager = global::UnityEngine.UIElements.UxmlSerializedDataUtility.CopySerialized<Example.Person>(this.manager);
+                if (this.manager != null)
+                {
+                    e.manager = global::UnityEngine.UIElements.UxmlSerializedDataCreator.CopySerialized<Example.Person>(this.manager);
+                }
             }
-            if (this.employees != null)
+            if (ShouldWriteAttributeValue(employees_UxmlAttributeFlags))
             {
-                e.employees = global::UnityEngine.UIElements.UxmlSerializedDataUtility.CopySerialized<System.Collections.Generic.List<Example.P
+                if (this.employees != null)
+                {
+                    e.employees = global::UnityEngine.UIElements.UxmlSerializedDataCreator.CopySerialized<System.Collections.Generic.List<Example.P
+                }
             }
         }
     }
@@ -331,18 +346,24 @@ public partial class Person
     public class UxmlSerializedData : global::UnityEngine.UIElements.UxmlSerializedData
     {
         #pragma warning disable 649
-        [global::UnityEngine.SerializeField] private string name;
-        [global::UnityEngine.SerializeField] private int age;
-        [global::UnityEngine.SerializeField] private string nationality;
+        [SerializeField] private string name;
+        [SerializeField, UxmlIgnore, HideInInspector] UxmlAttributeFlags name_UxmlAttributeFlags;
+        [SerializeField] private int age;
+        [SerializeField, UxmlIgnore, HideInInspector] UxmlAttributeFlags age_UxmlAttributeFlags;
+        [SerializeField] private string nationality;
+        [SerializeField, UxmlIgnore, HideInInspector] UxmlAttributeFlags nationality_UxmlAttributeFlags;
         #pragma warning restore 649
-        
+
         public override object CreateInstance() => new Person();
         public override void Deserialize(object obj)
         {
             var e = (Person)obj;
-            e.name = this.name;
-            e.age = this.age;
-            e.nationality = this.nationality;
+            if (ShouldWriteAttributeValue(name_UxmlAttributeFlags))
+                e.name = this.name;
+            if (ShouldWriteAttributeValue(age_UxmlAttributeFlags))
+                e.age = this.age;
+            if (ShouldWriteAttributeValue(nationality_UxmlAttributeFlags))
+                e.nationality = this.nationality;
         }
     }
 }
@@ -360,10 +381,12 @@ public partial class Department
     public new class UxmlSerializedData : UnityEngine.UIElements.VisualElement.UxmlSerializedData
     {
         #pragma warning disable 649
-        [UnityEngine.UIElements.UxmlObjectReferenceAttribute("manager")]
-        [global::UnityEngine.SerializeReference] private Example.Person.UxmlSerializedData manager;
+        [UxmlObjectReferenceAttribute("manager")]
+        [SerializeReference] private Example.Person.UxmlSerializedData manager;
+        [SerializeField, UxmlIgnore, HideInInspector] UxmlAttributeFlags manager_UxmlAttributeFlags;
         [UnityEngine.UIElements.UxmlObjectReferenceAttribute("employees")]
-        [global::UnityEngine.SerializeReference] private System.Collections.Generic.List<Example.Person.UxmlSerializedData> employees;
+        [SerializeReference] private System.Collections.Generic.List<Example.Person.UxmlSerializedData> employees;
+        [SerializeField, UxmlIgnore, HideInInspector] UxmlAttributeFlags employees_UxmlAttributeFlags;
         #pragma warning restore 649
         
         public override object CreateInstance() => new Department();
@@ -371,34 +394,38 @@ public partial class Department
         {
             base.Deserialize(obj);
             var e = (Department)obj;
-            if (this.manager != null)
+
+            if (ShouldWriteAttributeValue(manager_UxmlAttributeFlags))
             {
-                var managerInstance = (Example.Person)this.manager.CreateInstance();
-                this.manager.Deserialize(managerInstance);
-                e.manager = managerInstance;
-            }
-            else
-            {
-                e.manager = null;
-            }
-            var employeesInstance = new global::System.Collections.Generic.List<Example.Person>();
-            if (this.employees != null)
-            {
-                for (int i = 0; i < this.employees.Count; ++i)
+                if (this.manager != null)
                 {
-                    if (this.employees[i] != null)
-                    {
-                        var employeesItemInstance = (Example.Person)this.employees[i].CreateInstance();
-                        this.employees[i].Deserialize(employeesItemInstance);
-                        employeesInstance.Add(employeesItemInstance);
-                    }
-                    else
-                    {
-                        employeesInstance.Add(null);
-                    }
+                    var managerInstance = (Example.Person)this.manager.CreateInstance();
+                    this.manager.Deserialize(managerInstance);
+                    e.manager = managerInstance;
                 }
             }
-            e.employees = employeesInstance;
+            
+            if (ShouldWriteAttributeValue(employees_UxmlAttributeFlags))
+            {
+                var employeesInstance = new global::System.Collections.Generic.List<Example.Person>();
+                if (this.employees != null)
+                {
+                    for (int i = 0; i < this.employees.Count; ++i)
+                    {
+                        if (this.employees[i] != null)
+                        {
+                            var employeesItemInstance = (Example.Person)this.employees[i].CreateInstance();
+                            this.employees[i].Deserialize(employeesItemInstance);
+                            employeesInstance.Add(employeesItemInstance);
+                        }
+                        else
+                        {
+                            employeesInstance.Add(null);
+                        }
+                    }
+                }
+                e.employees = employeesInstance;
+            }
         }
     }
 }
@@ -602,7 +629,7 @@ public class InventoryPropertyDrawer : PropertyDrawer
     {
         m_ItemsProperty.arraySize++;
         var newItem = m_ItemsProperty.GetArrayElementAtIndex(m_ItemsProperty.arraySize - 1);
-        newItem.managedReferenceValue = UxmlSerializedDataUtility.CreateUxmlSerializedData(typeof(Gun));
+        newItem.managedReferenceValue = UxmlSerializedDataCreator.CreateUxmlSerializedData(typeof(Gun));
         newItem.FindPropertyRelative("id").intValue = NextItemId();
         newItem.FindPropertyRelative("name").stringValue = name;
         newItem.FindPropertyRelative("weight").floatValue = weight;
@@ -616,7 +643,7 @@ public class InventoryPropertyDrawer : PropertyDrawer
     {
         m_ItemsProperty.arraySize++;
         var newItem = m_ItemsProperty.GetArrayElementAtIndex(m_ItemsProperty.arraySize - 1);
-        newItem.managedReferenceValue = UxmlSerializedDataUtility.CreateUxmlSerializedData(typeof(Sword));
+        newItem.managedReferenceValue = UxmlSerializedDataCreator.CreateUxmlSerializedData(typeof(Sword));
         newItem.FindPropertyRelative("id").intValue = NextItemId();
         newItem.FindPropertyRelative("name").stringValue = name;
         newItem.FindPropertyRelative("weight").floatValue = weight;
@@ -627,7 +654,7 @@ public class InventoryPropertyDrawer : PropertyDrawer
     {
         m_ItemsProperty.arraySize++;
         var newItem = m_ItemsProperty.GetArrayElementAtIndex(m_ItemsProperty.arraySize - 1);
-        newItem.managedReferenceValue = UxmlSerializedDataUtility.CreateUxmlSerializedData(typeof(HealthPack));
+        newItem.managedReferenceValue = UxmlSerializedDataCreator.CreateUxmlSerializedData(typeof(HealthPack));
         newItem.FindPropertyRelative("id").intValue = NextItemId();
     }
 
@@ -646,7 +673,7 @@ public class InventoryPropertyDrawer : PropertyDrawer
             {
                 m_ItemsProperty.arraySize++;
                 var newItem = m_ItemsProperty.GetArrayElementAtIndex(m_ItemsProperty.arraySize - 1);
-                newItem.managedReferenceValue = UxmlSerializedDataUtility.CreateUxmlSerializedData(item);
+                newItem.managedReferenceValue = UxmlSerializedDataCreator.CreateUxmlSerializedData(item);
                 newItem.FindPropertyRelative("id").intValue = NextItemId();
                 m_InventoryProperty.serializedObject.ApplyModifiedProperties();
             });
@@ -663,10 +690,10 @@ Let's dive deeper into the **PropertyDrawer**. The key point to highlight is tha
 [CustomPropertyDrawer(typeof(Inventory.UxmlSerializedData))]
 ```
 
-When adding a new **UxmlObject** to the inventory list, it's essential to remember to include an instance of the UxmlSerializedData and not an `Item` instance. To simplify this process, we offer a convenient utility method called `UxmlSerializedDataUtility.CreateUxmlSerializedData`. This method not only generates an instance of the **UxmlObject's** **UxmlSerializedData** but also ensures that it comes with the appropriate default values pre-assigned.
+When adding a new **UxmlObject** to the inventory list, it's essential to remember to include an instance of the UxmlSerializedData and not an `Item` instance. To simplify this process, we offer a convenient utility method called `UxmlSerializedDataCreator.CreateUxmlSerializedData`. This method not only generates an instance of the **UxmlObject's** **UxmlSerializedData** but also ensures that it comes with the appropriate default values pre-assigned.
 
 ```c#
-newItem.managedReferenceValue = UxmlSerializedDataUtility.CreateUxmlSerializedData(typeof(HealthPack));
+newItem.managedReferenceValue = UxmlSerializedDataCreator.CreateUxmlSerializedData(typeof(HealthPack));
 ```
 
 In our approach, we've introduced the assignment of an id value. To manage this, we store the last used id value within the element as a hidden field labeled `nextItemId`. Additionally, we've incorporated buttons that allow users to easily add preconfigured sets of items. For instance, a Soldier might receive a Rifle, Machete, and Health Pack.
