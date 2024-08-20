@@ -774,7 +774,7 @@ public partial class MyCustomIntField : IntegerField
 
 ## Conclusion
 
-We hope that this introduction has been helpful, if you have further questions you can ask them on discussions under the [UI Toolkit tag]([https://forum.unity.com/forums/ui-toolkit.178/](https://discussions.unity.com/tag/UI-Toolkit)).
+We hope that this introduction has been helpful, if you have further questions you can ask them on discussions under the [UI Toolkit tag](https://forum.unity.com/forums/ui-toolkit.178/)(https://discussions.unity.com/tag/UI-Toolkit)).
 
 Be sure to also check out our scripting docs which include further information and examples for [UxmlElement](https://docs.unity3d.com/2023.3/Documentation/ScriptReference/UIElements.UxmlElementAttribute.html) and [UxmlObjects](https://docs.unity3d.com/2023.3/Documentation/ScriptReference/UIElements.UxmlObjectAttribute.html).
 
