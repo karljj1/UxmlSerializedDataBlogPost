@@ -778,4 +778,6 @@ We hope that this introduction has been helpful, if you have further questions y
 
 Be sure to also check out our scripting docs which include further information and examples for [UxmlElement](https://docs.unity3d.com/2023.3/Documentation/ScriptReference/UIElements.UxmlElementAttribute.html) and [UxmlObjects](https://docs.unity3d.com/2023.3/Documentation/ScriptReference/UIElements.UxmlObjectAttribute.html).
 
+If you want to build your VisualElements into a library file then [here](https://discussions.unity.com/t/ui-toolkit-serialization-and-library-compilation-dll-support/1524794) is a guide to run the code generator during the build.
+
 All the above examples can be found in this [project](https://github.com/karljj1/UxmlSerializedDataBlogPost).
